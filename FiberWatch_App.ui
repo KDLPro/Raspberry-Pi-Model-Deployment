@@ -157,7 +157,7 @@
       <x>50</x>
       <y>150</y>
       <width>410</width>
-      <height>351</height>
+      <height>350</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -169,7 +169,7 @@
     <property name="maximumSize">
      <size>
       <width>410</width>
-      <height>351</height>
+      <height>350</height>
      </size>
     </property>
     <property name="frameShape">
@@ -188,7 +188,7 @@
       <x>564</x>
       <y>150</y>
       <width>410</width>
-      <height>351</height>
+      <height>350</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -200,7 +200,7 @@
     <property name="maximumSize">
      <size>
       <width>410</width>
-      <height>351</height>
+      <height>350</height>
      </size>
     </property>
     <property name="frameShape">
