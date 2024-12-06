@@ -247,11 +247,11 @@ class Ui_MainWindow(object):
             # Load image
             self.imgPath, _ = QFileDialog.getOpenFileName(self, caption="Open Image", filter="Image Files (*.png *.jpg *.bmp)")
         except:
-            AlertImage()
+            self.loadImageFail()
             return
         
         if (self.imgPath == ""):
-            AlertImage()
+            self.loadImageFail()
             return
         
         cv_image = cv2.imread(self.imgPath, cv2.IMREAD_UNCHANGED)
@@ -294,6 +294,14 @@ class Ui_MainWindow(object):
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image.setScene(self.scene)
 
+    def loadImageFail(self):
+        # Clears the graphics view when image loading has failed, and resets variables
+        AlertImage()
+        self.scene.clear()
+        self.image.setStyleSheet("background-color: #AFBE87")
+        self.imgPath = ""
+
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "FiberWatch"))
@@ -312,7 +320,6 @@ def AlertImage():
     ui.setupUi(dialog)
     ui.setDialogDetails(dialog, title="Image loading failed!", text="Image must be loaded first!", textColor="#B41C2B")
     dialog.exec()
-    return
 
 class Dialog(QtWidgets.QDialog, Ui_Dialog):
     def __init__(self, *args, obj=None, **kwargs):
