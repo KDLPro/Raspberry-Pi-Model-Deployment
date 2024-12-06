@@ -254,6 +254,8 @@ class Ui_MainWindow(object):
             self.loadImageFail()
             return
         
+        _translate = QtCore.QCoreApplication.translate
+        self.statusbar.showMessage(_translate("MainWindow", "Processing image..."))
         cv_image = cv2.imread(self.imgPath, cv2.IMREAD_UNCHANGED)
 
         # Resize image using OpenCV
@@ -288,11 +290,14 @@ class Ui_MainWindow(object):
         
         # Display image in the graphics window
         pixmap_item = QGraphicsPixmapItem(scaledPixmap)
+        self.image.setStyleSheet("background-color: #FFFFFF")
 
         self.scene.clear()
         self.scene.addItem(pixmap_item)
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image.setScene(self.scene)
+
+        self.statusbar.clearMessage()
 
     def loadImageFail(self):
         # Clears the graphics view when image loading has failed, and resets variables
