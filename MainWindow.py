@@ -332,7 +332,7 @@ class Ui_MainWindow(object):
         results = ncnn_model.predict(self.imgPath, project=custom_save_dir, save=True, exist_ok=True)
 
         base_img = os.path.basename(self.imgPath)
-        final_img = custom_save_dir + "predict/" + base_img
+        final_img = custom_save_dir + "predict\\" + base_img
 
         cv_image = cv2.imread(final_img, cv2.IMREAD_UNCHANGED)
 
