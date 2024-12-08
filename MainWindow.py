@@ -410,15 +410,25 @@ class Ui_MainWindow(object):
             model.export(format="ncnn") 
 
         ncnn_model = YOLO("models/November-23_ncnn_model")
-        results = ncnn_model.predict(self.imgPath, project=custom_save_dir, save=True, exist_ok=True)
+        results = ncnn_model.predict(self.imgPath, project=custom_save_dir, save=True, exist_ok=True, save_txt=True)
 
+        # Get image location
         base_img = os.path.basename(self.imgPath)
-        final_img = custom_save_dir + "predict\\" + base_img
+        final_img = os.path.join(custom_save_dir, "predict", base_img)
+        final_img = os.path.normpath(final_img) 
 
-        return final_img
+        # Get labels location
+        img_without_ext = os.path.splitext(base_img)[0]
+        labels_dir = os.path.join(custom_save_dir, "predict", "labels")
+        labels_dir = os.path.normpath(labels_dir)
+        txt_file = os.path.join(labels_dir, f"{img_without_ext}.txt")
+        txt_file = os.path.normpath(txt_file)
 
-    def handle_pred_result(self, final_img):
-        cv_image = cv2.imread(final_img, cv2.IMREAD_UNCHANGED)
+        return [final_img, txt_file]
+
+    def handle_pred_result(self, result_arr):
+        # Process image first
+        cv_image = cv2.imread(result_arr[0], cv2.IMREAD_UNCHANGED)
 
         # Resize image using OpenCV
         view_width = self.image.width() - 2
@@ -460,8 +470,23 @@ class Ui_MainWindow(object):
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image.setScene(self.scene)
 
+        grade_indices = []
+        with open(result_arr[1], "r") as file:
+            for line in file:
+                tokens = line.split()
+                if tokens and tokens[0].isdigit():
+                    grade_indices.append(int(tokens[0]))
+                elif tokens:  # Try converting non-integer numbers (e.g., float)
+                    try:
+                        grade_indices.append(float(tokens[0]))
+                    except ValueError:
+                        pass
+
+        print(grade_indices)
+
+
     def prediction_done(self):
-        self.update_status("Prediction done!", timeout = 2)
+        self.update_status("Prediction done!", timeout = 2000)
 
     def update_status(self, message, timeout = 0):
         """
