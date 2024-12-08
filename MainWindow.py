@@ -258,8 +258,7 @@ class Ui_MainWindow(object):
             self.loadImageFail()
             return
         
-        _translate = QtCore.QCoreApplication.translate
-        self.statusbar.showMessage(_translate("MainWindow", "Processing image..."))
+        self.update_status("Processing image...")
         cv_image = cv2.imread(self.imgPath, cv2.IMREAD_UNCHANGED)
 
         # Clear scene
@@ -316,8 +315,7 @@ class Ui_MainWindow(object):
         self.imgPath = ""
 
     def generatePreds(self):
-        _translate = QtCore.QCoreApplication.translate
-        self.statusbar.showMessage(_translate("MainWindow", "Processing image..."))
+        self.update_status("Processing image...")
 
         curr_dir = os.getcwd()
         custom_save_dir = curr_dir + "\\results\\"
@@ -380,6 +378,12 @@ class Ui_MainWindow(object):
 
         self.statusbar.clearMessage()
 
+    def update_status(self, message, timeout = 0):
+        """
+        Update the status bar with a message.
+        """
+        _translate = QtCore.QCoreApplication.translate
+        self.statusbar.showMessage(_translate("MainWindow", message), timeout)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
