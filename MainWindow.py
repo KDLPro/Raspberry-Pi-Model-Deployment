@@ -331,8 +331,8 @@ class Ui_MainWindow(object):
             model = YOLO("models/November-23.pt")
             model.export(format="ncnn") 
 
-        ncnn_model = YOLO("models/November-23_ncnn_model")
-        results = ncnn_model.predict(self.imgPath, project=custom_save_dir, save=True, exist_ok=True, save_txt=True)
+        ncnn_model = YOLO("models/November-23_ncnn_model", task="detect")
+        results = ncnn_model.predict(self.imgPath, project=custom_save_dir, save=True, exist_ok=True, save_txt=True, iou=0.2, agnostic_nms=True)
 
         # Get image location
         base_img = os.path.basename(self.imgPath)
