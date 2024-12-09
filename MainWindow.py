@@ -242,6 +242,7 @@ class Ui_MainWindow(object):
         self.grade_s2 = [0]
         self.grade_s3 = [0]
         self.length_grades = [0]
+        self.offline = False
 
         # Call supabase client
         self.initSupabaseClient()
@@ -250,7 +251,17 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def initSupabaseClient(self):
-        self.supabase = create_client(Keys.url, Keys.key)
+        try:
+            self.supabase = create_client(Keys.url, Keys.key)
+
+            # Set system status to online
+            response = (
+                        self.supabase.table("system_status")
+                        .insert({"online": True, "alert_code": 101})
+                        .execute()
+                    )
+        except:
+            self.activateOfflineMode()
 
     def openImage(self):
         self.update_status("Loading image...")
@@ -464,21 +475,22 @@ class Ui_MainWindow(object):
                 elif i == 1:        # Grade S3
                     grades[1] += 1
 
-            # Uploading results to Supabase
-            self.update_status("Uploading results to Supabase database...")
-            for i in range(2):
-                if i == 0:
-                    self.grade_s2.append(grades[0])
-                else:
-                    self.grade_s3.append(grades[1])
-                if grades[i] == 0:
-                    continue
-                grade_code = "S2" if (i == 1) else "S3"
-                response = (
-                    self.supabase.table("fiber_scanning_logs")
-                    .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
-                    .execute()
-                )
+            if self.offline == False:
+                # Uploading results to Supabase
+                self.update_status("Uploading results to Supabase database...")
+                for i in range(2):
+                    if i == 0:
+                        self.grade_s2.append(grades[0])
+                    else:
+                        self.grade_s3.append(grades[1])
+                    if grades[i] == 0:
+                        continue
+                    grade_code = "S2" if (i == 1) else "S3"
+                    response = (
+                        self.supabase.table("fiber_scanning_logs")
+                        .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
+                        .execute()
+                    )
 
             self.length_grades.append(len(self.length_grades))
 
@@ -558,6 +570,18 @@ class Ui_MainWindow(object):
         """
         _translate = QtCore.QCoreApplication.translate
         self.statusbar.showMessage(_translate("MainWindow", message), timeout)
+
+    def activateOfflineMode(self):
+    # Alert user via dialog that the app can't connect to the internet
+        self.offline = True             # Offline mode
+        dialog = QDialog()
+        ui = Ui_Dialog()
+        ui.setupUi(dialog)
+        ui.setDialogDetails(dialog, 
+                            title="Offline Mode", 
+                            text="Can't connect to the Internet! \nEntering offline mode.", 
+                            textColor="#B41C2B")
+        dialog.exec()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
