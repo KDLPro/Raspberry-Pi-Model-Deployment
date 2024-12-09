@@ -463,6 +463,23 @@ class Ui_MainWindow(object):
                 elif i == 1:        # Grade S3
                     grades[1] += 1
 
+            # Uploading results to Supabase
+            self.update_status("Uploading results to Supabase database...")
+            for i in range(2):
+                if i == 0:
+                    self.grade_s2.append(grades[0])
+                else:
+                    self.grade_s3.append(grades[1])
+                if grades[i] == 0:
+                    continue
+                grade_code = "S2" if (i == 1) else "S3"
+                response = (
+                    self.supabase.table("fiber_scanning_logs")
+                    .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
+                    .execute()
+                )
+
+            self.length_grades.append(len(self.length_grades))
     def predictionFail(self):
         AlertPrediction()
         
