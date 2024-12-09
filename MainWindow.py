@@ -228,6 +228,7 @@ class Ui_MainWindow(object):
         self.statusbar.setFont(font)
         MainWindow.setStatusBar(self.statusbar)
         self.img_scene = QGraphicsScene()
+        self.graph_scene = QGraphicsScene()
 
         # Buttons to functions
         self.loadImage.clicked.connect(self.openImage)
@@ -480,7 +481,62 @@ class Ui_MainWindow(object):
                 )
 
             self.length_grades.append(len(self.length_grades))
+
+            # Display graph
+            self.update_status("Displaying graph...")
+
+            SatoshiLabel = {
+                "family" : "Satoshi",
+                "color":  "#006328",
+                "weight": "medium",
+                "size": 12,
+            }
+
+            # Initialize graph
+
+            # Desired pixel dimensions
+            width_px = 820
+            height_px = 700
+            dpi = 250  # Adjust DPI as needed
+
+            # Convert pixel dimensions to inches
+            width_in = width_px / dpi
+            height_in = height_px / dpi
+
+            # Create the figure
+            fig, ax = plt.subplots(figsize=(width_in, height_in), dpi=dpi)
+            ax.plot(self.length_grades, self.grade_s2, label = "Grade S2", color = "#D0C7AA")
+            ax.plot(self.length_grades, self.grade_s3, label = "Grade S3", color = "#825B43")
+            ax.set_ylabel("Number of Fibers", fontdict = SatoshiLabel, labelpad=5)
+            ax.tick_params(axis = "both", labelsize = 10, labelfontfamily = "Satoshi")
+            ax.legend()
+            plt.tight_layout(pad=1)
+
+            # Convert to cv2 image
+            canvas = FigureCanvasAgg(fig)
+            canvas.draw()
+            fig.tight_layout()
+            buf = canvas.buffer_rgba()
+            image = np.asarray(buf)
+            image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            resized_image = cv2.resize(image_bgr, (410, 350))
+            height, width, channels = resized_image.shape
+            qimage = QImage(resized_image.data, width, height, 3 * width, QImage.Format.Format_BGR888)
+            pixmap = QPixmap.fromImage(qimage)
+
+            # Display graph
+            pixmap_item = self.graph_scene.addPixmap(pixmap)
+            pixmap_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+            self.graph.fitInView(pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+            self.graph.setScene(self.graph_scene)
+
+            plt.close(fig)
+
+        except Exception as e:
+            self.predictionFail()
+
     def predictionFail(self):
+        # Clears the graphics view when image loading has failed, and resets variables
         AlertPrediction()
         
         self.predict.setDisabled(False)
