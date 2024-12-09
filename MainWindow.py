@@ -221,7 +221,7 @@ class Ui_MainWindow(object):
         font.setBold(True)
         self.statusbar.setFont(font)
         MainWindow.setStatusBar(self.statusbar)
-        self.scene = QGraphicsScene()
+        self.img_scene = QGraphicsScene()
 
         # Buttons to functions
         self.loadImage.clicked.connect(self.openImage)
@@ -242,72 +242,98 @@ class Ui_MainWindow(object):
         self.supabase = create_client(Keys.url, Keys.key)
 
     def openImage(self):
-        try:
-            # Load image
-            self.imgPath, _ = QFileDialog.getOpenFileName(self, caption="Open Image", filter="Image Files (*.png *.jpg *.bmp)")
-        except:
-            self.loadImageFail()
-            return
-        
+        self.update_status("Loading image...")
+        self.loadImage.setDisabled(True)
+        self.loadImage.setStyleSheet("background-color: rgb(0, 236, 96);")
+
+        # Load image
+        self.imgPath, _ = QFileDialog.getOpenFileName(self, caption="Open Image", filter="Image Files (*.png *.jpg *.bmp)")
+
         if (self.imgPath == ""):
             self.loadImageFail()
             return
-        
-        self.update_status("Processing image...")
-        cv_image = cv2.imread(self.imgPath, cv2.IMREAD_UNCHANGED)
 
-        # Clear scene
-        self.scene.clear()
-        self.image.resetTransform()
+        # Create a worker to handle predictions
+        worker = Worker(self.processImage)
 
-        # Resize image using OpenCV
-        view_width = self.image.width() - 2
-        view_height = self.image.height() - 2
-        
-        original_width = cv_image.shape[1]
-        original_height = cv_image.shape[0]
+        worker.signals.result.connect(self.displayImage)
+        worker.signals.error.connect(self.loadImageFail)
+        worker.signals.finished.connect(self.img_load_done)
 
-        width_scale = view_width / original_width
-        height_scale = view_height / original_height
+        # Start the worker
+        self.thread_manager.start(worker)
 
-        scale_factor = min(width_scale, height_scale)
+    def processImage(self):
+        try: 
+            self.update_status("Processing image...")
 
-        new_width = int(original_width * scale_factor)
-        new_height = int(original_height * scale_factor)
+            cv_image = cv2.imread(self.imgPath, cv2.IMREAD_UNCHANGED)
 
-        # Resize the image with OpenCV while maintaining the aspect ratio
-        resized_cv_image = cv2.resize(cv_image, (new_width, new_height))
+            # Clear scene
+            self.img_scene.clear()
+            self.image.resetTransform()
 
-        # Check if the image has 4 channels (RGBA) or 3 channels (RGB)
-        if resized_cv_image.shape[2] == 4: 
-            resized_cv_image_rgb = cv2.cvtColor(resized_cv_image, cv2.COLOR_BGRA2RGBA)
-        else:  
-            resized_cv_image_rgb = cv2.cvtColor(resized_cv_image, cv2.COLOR_BGR2RGB)
+            # Resize image using OpenCV
+            view_width = self.image.width() - 2
+            view_height = self.image.height() - 2
+            
+            original_width = cv_image.shape[1]
+            original_height = cv_image.shape[0]
 
-        # Convert the OpenCV image to QImage
-        height, width, channel = resized_cv_image_rgb.shape
-        bytes_per_line = 3 * width if channel == 3 else 4 * width  # 3 for RGB, 4 for RGBA
-        qimage = QImage(resized_cv_image_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888 if channel == 3 else QImage.Format.Format_RGBA8888)
-        scaledPixmap = QPixmap.fromImage(qimage)
-        
-        # Display image in the graphics window
-        pixmap_item = QGraphicsPixmapItem(scaledPixmap)
-        self.image.setStyleSheet("background-color: #FFFFFF")
+            width_scale = view_width / original_width
+            height_scale = view_height / original_height
 
-        self.scene.addItem(pixmap_item)
-        self.image.fitInView(self.scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
-        self.image.centerOn(255, 295)
-        self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image.setScene(self.scene)
+            scale_factor = min(width_scale, height_scale)
 
-        self.statusbar.clearMessage()
+            new_width = int(original_width * scale_factor)
+            new_height = int(original_height * scale_factor)
+
+            # Resize the image with OpenCV while maintaining the aspect ratio
+            resized_cv_image = cv2.resize(cv_image, (new_width, new_height))
+
+            # Check if the image has 4 channels (RGBA) or 3 channels (RGB)
+            if resized_cv_image.shape[2] == 4: 
+                resized_cv_image_rgb = cv2.cvtColor(resized_cv_image, cv2.COLOR_BGRA2RGBA)
+            else:  
+                resized_cv_image_rgb = cv2.cvtColor(resized_cv_image, cv2.COLOR_BGR2RGB)
+
+            return resized_cv_image_rgb  # Pass processed image back to main thread
+
+        except Exception as e:
+            raise e  # Worker will emit error signal
+
+    def displayImage(self, resized_cv_image_rgb):
+        try:
+            # Convert the OpenCV image to QImage
+            height, width, channel = resized_cv_image_rgb.shape
+            bytes_per_line = 3 * width if channel == 3 else 4 * width  # 3 for RGB, 4 for RGBA
+            qimage = QImage(resized_cv_image_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888 if channel == 3 else QImage.Format.Format_RGBA8888)
+            scaledPixmap = QPixmap.fromImage(qimage)
+            
+            # Display image in the graphics window
+            pixmap_item = QGraphicsPixmapItem(scaledPixmap)
+            self.image.setStyleSheet("background-color: #FFFFFF")
+
+            self.img_scene.addItem(pixmap_item)
+            self.image.fitInView(self.img_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+            self.image.centerOn(255, 295)
+            self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.image.setScene(self.img_scene)
+
+            self.statusbar.clearMessage()
+
+        except Exception as e:
+            print("Loading image failed.")
 
     def loadImageFail(self):
         # Clears the graphics view when image loading has failed, and resets variables
         AlertImage()
-        self.scene.clear()
+        self.img_scene.clear()
         self.image.setStyleSheet("background-color: #AFBE87")
         self.imgPath = ""
+        
+        self.loadImage.setDisabled(False)
+        self.loadImage.setStyleSheet("background-color: rgb(0, 170, 69);")
 
     def generatePreds(self):
         self.update_status("Processing image...")
@@ -416,6 +442,10 @@ class Ui_MainWindow(object):
 
         print(grade_indices)
 
+    def img_load_done(self):
+        self.update_status("Image loaded successfully!", timeout = 2000)
+        self.loadImage.setDisabled(False)
+        self.loadImage.setStyleSheet("background-color: rgb(0, 170, 69);")
 
     def prediction_done(self):
         self.update_status("Prediction done!", timeout = 2000)
