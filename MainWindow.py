@@ -603,13 +603,13 @@ def AlertImage():
     dialog.exec()
 
 def AlertPrediction():
-    # Alert user via dialog that generating predictions has failed
+    # Alert user via dialog that the predictions can't be uploaded
     dialog = QDialog()
     ui = Ui_Dialog()
     ui.setupUi(dialog)
     ui.setDialogDetails(dialog, 
-                        title="Generating predictions failed!", 
-                        text="Generating predictions failed. \nPlease check your Internet connection \nand try again", 
+                        title="No Internet Connection", 
+                        text="Cannot upload results to online database. \nPlease check your Internet connection \nand try again.", 
                         textColor="#B41C2B")
     dialog.exec()
 
