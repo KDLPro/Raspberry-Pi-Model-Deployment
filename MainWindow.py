@@ -119,6 +119,7 @@ class Ui_MainWindow(object):
         MainWindow.setStyleSheet("")
         MainWindow.setIconSize(QtCore.QSize(48, 48))
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
+        self.centralwidget.setStyleSheet("border-bottom: 1px solid rgb(0, 170, 69);")
         self.centralwidget.setObjectName("centralwidget")
         self.title_label = QtWidgets.QLabel(parent=self.centralwidget)
         self.title_label.setGeometry(QtCore.QRect(412, 10, 200, 31))
