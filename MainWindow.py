@@ -147,6 +147,8 @@ class Ui_MainWindow(object):
         self.graph = QtWidgets.QGraphicsView(parent=self.centralwidget)
         self.graph.setGeometry(QtCore.QRect(564, 120, 410, 350))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
+        self.graph.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.graph.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.graph.sizePolicy().hasHeightForWidth())
