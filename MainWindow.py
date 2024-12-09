@@ -18,6 +18,8 @@ import cv2
 
 from ultralytics import YOLO
 
+from supabase import create_client
+
 class WorkerSignals(QObject):
     '''
     Defines the signals available from a running worker thread.
@@ -227,9 +229,14 @@ class Ui_MainWindow(object):
 
         # Variables
         self.imgPath = ""
+        # Call supabase client
+        self.initSupabaseClient()
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def initSupabaseClient(self):
+        self.supabase = create_client(Keys.url, Keys.key)
 
     def openImage(self):
         try:
