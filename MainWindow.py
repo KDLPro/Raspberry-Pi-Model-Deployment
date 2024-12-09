@@ -20,6 +20,10 @@ from ultralytics import YOLO
 
 from supabase import create_client
 
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+import numpy as np
+
 class WorkerSignals(QObject):
     '''
     Defines the signals available from a running worker thread.
@@ -232,6 +236,10 @@ class Ui_MainWindow(object):
 
         # Variables
         self.imgPath = ""
+        self.grade_s2 = [0]
+        self.grade_s3 = [0]
+        self.length_grades = [0]
+
         # Call supabase client
         self.initSupabaseClient()
 
@@ -337,17 +345,20 @@ class Ui_MainWindow(object):
 
     def generatePreds(self):
         self.update_status("Processing image...")
+        self.predict.setDisabled(True)
+        self.predict.setStyleSheet("background-color: rgb(0, 236, 96);")
 
         # Create a worker to handle predictions
-        worker = Worker(self.load_model_and_predict)
+        worker = Worker(self.loadModelAndPredict)
 
-        worker.signals.result.connect(self.handle_pred_result)
+        worker.signals.result.connect(self.handlePredResult)
+        worker.signals.error.connect(self.predictionFail)
         worker.signals.finished.connect(self.prediction_done)
 
         # Start the worker
         self.thread_manager.start(worker)
         
-    def load_model_and_predict(self):
+    def loadModelAndPredict(self):
         curr_dir = os.getcwd()
         custom_save_dir = os.path.join(curr_dir, "results")
         custom_save_dir = os.path.normpath(custom_save_dir)
@@ -358,6 +369,7 @@ class Ui_MainWindow(object):
             print(f"Folder '{custom_save_dir}' and all its contents have been deleted.")
         except OSError as e:
             print(f"Error: {e.strerror}.")
+
         os.makedirs(custom_save_dir, exist_ok=True)
         print(custom_save_dir)
 
@@ -384,63 +396,76 @@ class Ui_MainWindow(object):
 
         return [final_img, txt_file]
 
-    def handle_pred_result(self, result_arr):
-        # Process image first
-        cv_image = cv2.imread(result_arr[0], cv2.IMREAD_UNCHANGED)
+    def handlePredResult(self, result_arr):
+        try: 
+            # Process image first
+            cv_image = cv2.imread(result_arr[0], cv2.IMREAD_UNCHANGED)
 
-        # Resize image using OpenCV
-        view_width = self.image.width() - 2
-        view_height = self.image.height() - 2
+            # Resize image using OpenCV
+            view_width = self.image.width() - 2
+            view_height = self.image.height() - 2
+            
+            original_width = cv_image.shape[1]
+            original_height = cv_image.shape[0]
+
+            width_scale = view_width / original_width
+            height_scale = view_height / original_height
+
+            scale_factor = min(width_scale, height_scale)
+
+            new_width = int(original_width * scale_factor)
+            new_height = int(original_height * scale_factor)
+
+            # Resize the image with OpenCV while maintaining the aspect ratio
+            resized_cv_image = cv2.resize(cv_image, (new_width, new_height))
+
+            # Check if the image has 4 channels (RGBA) or 3 channels (RGB)
+            if resized_cv_image.shape[2] == 4: 
+                resized_cv_image_rgb = cv2.cvtColor(resized_cv_image, cv2.COLOR_BGRA2RGBA)
+            else:  
+                resized_cv_image_rgb = cv2.cvtColor(resized_cv_image, cv2.COLOR_BGR2RGB)
+
+            # Convert the OpenCV image to QImage
+            height, width, channel = resized_cv_image_rgb.shape
+            bytes_per_line = 3 * width if channel == 3 else 4 * width  # 3 for RGB, 4 for RGBA
+            qimage = QImage(resized_cv_image_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888 if channel == 3 else QImage.Format.Format_RGBA8888)
+            scaledPixmap = QPixmap.fromImage(qimage)
+            
+            # Display image in the graphics window
+            pixmap_item = QGraphicsPixmapItem(scaledPixmap)
+            self.image.setStyleSheet("background-color: #FFFFFF")
+
+            self.img_scene.addItem(pixmap_item)
+            self.image.fitInView(self.img_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+            self.image.centerOn(255, 295)
+            self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.image.setScene(self.img_scene)
+
+            # Get data about the classification results
+            grade_indices = []
+            with open(result_arr[1], "r") as file:
+                for line in file:
+                    tokens = line.split()
+                    if tokens and tokens[0].isdigit():
+                        grade_indices.append(int(tokens[0]))
+                    elif tokens:  # Try converting non-integer numbers (e.g., float)
+                        try:
+                            grade_indices.append(float(tokens[0]))
+                        except ValueError:
+                            pass
+
+            grades = [0, 0]
+            for i in grade_indices:
+                if i == 0:          # Grade S2
+                    grades[0] += 1
+                elif i == 1:        # Grade S3
+                    grades[1] += 1
+
+    def predictionFail(self):
+        AlertPrediction()
         
-        original_width = cv_image.shape[1]
-        original_height = cv_image.shape[0]
-
-        width_scale = view_width / original_width
-        height_scale = view_height / original_height
-
-        scale_factor = min(width_scale, height_scale)
-
-        new_width = int(original_width * scale_factor)
-        new_height = int(original_height * scale_factor)
-
-        # Resize the image with OpenCV while maintaining the aspect ratio
-        resized_cv_image = cv2.resize(cv_image, (new_width, new_height))
-
-        # Check if the image has 4 channels (RGBA) or 3 channels (RGB)
-        if resized_cv_image.shape[2] == 4: 
-            resized_cv_image_rgb = cv2.cvtColor(resized_cv_image, cv2.COLOR_BGRA2RGBA)
-        else:  
-            resized_cv_image_rgb = cv2.cvtColor(resized_cv_image, cv2.COLOR_BGR2RGB)
-
-        # Convert the OpenCV image to QImage
-        height, width, channel = resized_cv_image_rgb.shape
-        bytes_per_line = 3 * width if channel == 3 else 4 * width  # 3 for RGB, 4 for RGBA
-        qimage = QImage(resized_cv_image_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888 if channel == 3 else QImage.Format.Format_RGBA8888)
-        scaledPixmap = QPixmap.fromImage(qimage)
-        
-        # Display image in the graphics window
-        pixmap_item = QGraphicsPixmapItem(scaledPixmap)
-        self.image.setStyleSheet("background-color: #FFFFFF")
-
-        self.scene.addItem(pixmap_item)
-        self.image.fitInView(self.scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
-        self.image.centerOn(255, 295)
-        self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image.setScene(self.scene)
-
-        grade_indices = []
-        with open(result_arr[1], "r") as file:
-            for line in file:
-                tokens = line.split()
-                if tokens and tokens[0].isdigit():
-                    grade_indices.append(int(tokens[0]))
-                elif tokens:  # Try converting non-integer numbers (e.g., float)
-                    try:
-                        grade_indices.append(float(tokens[0]))
-                    except ValueError:
-                        pass
-
-        print(grade_indices)
+        self.predict.setDisabled(False)
+        self.predict.setStyleSheet("background-color: rgb(0, 170, 69);")
 
     def img_load_done(self):
         self.update_status("Image loaded successfully!", timeout = 2000)
@@ -449,6 +474,8 @@ class Ui_MainWindow(object):
 
     def prediction_done(self):
         self.update_status("Prediction done!", timeout = 2000)
+        self.predict.setDisabled(False)
+        self.predict.setStyleSheet("background-color: rgb(0, 170, 69);")
 
     def update_status(self, message, timeout = 0):
         """
@@ -474,6 +501,17 @@ def AlertImage():
     ui = Ui_Dialog()
     ui.setupUi(dialog)
     ui.setDialogDetails(dialog, title="Image loading failed!", text="Image must be loaded first!", textColor="#B41C2B")
+    dialog.exec()
+
+def AlertPrediction():
+    # Alert user via dialog that generating predictions has failed
+    dialog = QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(dialog)
+    ui.setDialogDetails(dialog, 
+                        title="Generating predictions failed!", 
+                        text="Generating predictions failed. \nPlease check your Internet connection \nand try again", 
+                        textColor="#B41C2B")
     dialog.exec()
 
 class Dialog(QtWidgets.QDialog, Ui_Dialog):
