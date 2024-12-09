@@ -24,6 +24,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import numpy as np
 
+import Keys
+
 class WorkerSignals(QObject):
     '''
     Defines the signals available from a running worker thread.
