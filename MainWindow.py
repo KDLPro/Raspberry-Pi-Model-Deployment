@@ -10,8 +10,8 @@ import os, traceback, sys, shutil
 from Dialog import Ui_Dialog
 
 from PyQt6 import QtCore, QtGui, QtWidgets
-from PyQt6.QtWidgets import QFileDialog, QGraphicsScene, QDialog, QGraphicsPixmapItem
-from PyQt6.QtGui import QPixmap, QImage
+from PyQt6.QtWidgets import QFileDialog, QGraphicsScene, QDialog, QGraphicsPixmapItem, QMessageBox
+from PyQt6.QtGui import QPixmap, QImage, QFont
 from PyQt6.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject, pyqtSlot
 
 import cv2
@@ -593,6 +593,34 @@ class Ui_MainWindow(object):
         self.loadImage.setText(_translate("MainWindow", "Load Image"))
         self.predict.setToolTip(_translate("MainWindow", "Generates predictions based on the loaded image."))
         self.predict.setText(_translate("MainWindow", "Predict!"))
+
+    def closeEvent(self, event):
+        """
+        Override the closeEvent to execute custom logic before closing.
+        """
+        # Show a confirmation dialog
+        reply = QMessageBox.question(
+            self,
+            "Confirm Exit",
+            "<p style='font-family: Satoshi Bold; font-size: 12pt'>Are you sure you want to exit?</p>",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            # Perform any cleanup or save operations here
+            print("Application is closing. Cleaning up...")
+            
+            # Set system status to offline
+            response = (
+                        self.supabase.table("system_status")
+                        .insert({"online": False, "alert_code": 102})
+                        .execute()
+                    )
+            
+            event.accept()  # Accept the event and close the application
+        else:
+            event.ignore()  # Ignore the event and keep the application open
 
 def AlertImage():
     # Alert user via dialog that an image needs to be loaded
