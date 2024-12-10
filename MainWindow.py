@@ -297,6 +297,8 @@ class Ui_MainWindow(object):
     def openListWidgetClicked(self, clickedItem):
         if (clickedItem.text() == "Open Image"):
             self.openImage()
+        elif (clickedItem.text() == "Open Video"):
+            self.openVideo()
 
     def openImage(self):
         self.listWidget.hide()
@@ -317,7 +319,7 @@ class Ui_MainWindow(object):
         worker = Worker(self.processImage)
 
         worker.signals.result.connect(self.displayImage)
-        worker.signals.error.connect(self.openFail)
+        worker.signals.error.connect(self.loadImageFail)
         worker.signals.finished.connect(self.img_load_done)
 
         # Start the worker
@@ -392,9 +394,31 @@ class Ui_MainWindow(object):
         self.img_scene.clear()
         self.image.setStyleSheet("background-color: #AFBE87")
         self.imgPath = ""
+        self.disableOpenMenu()
+
+    def openVideo(self):
+        self.listWidget.hide()
+        self.open.setDisabled(True)
+        self.predict.setDisabled(True)
+        self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
+
+        # Load image
+        self.videoPath, _ = QFileDialog.getOpenFileName(self, caption="Open Video", filter="Video Files (*.mp4 *.flv *.ts *.mts *.avi)")
+
+        if (self.videoPath == ""):
+            self.loadVideoFail()
+            return
         
-        self.open.setDisabled(False)
-        self.open.setStyleSheet("background-color: rgb(0, 170, 69);")
+        self.update_status("Loading image...")
+
+    def loadVideoFail(self):
+        # Clears the graphics view and status bar when image loading has failed, and resets variables
+        self.statusbar.clearMessage()
+        AlertImage()
+        self.img_scene.clear()
+        self.image.setStyleSheet("background-color: #AFBE87")
+        self.imgPath = ""
+        self.disableOpenMenu()
 
     def generatePreds(self):
         self.update_status("Processing image...")
@@ -685,6 +709,14 @@ def AlertImage():
     ui = Ui_Dialog()
     ui.setupUi(dialog)
     ui.setDialogDetails(dialog, title="Image loading failed!", text="Image must be loaded first!", textColor="#B41C2B")
+    dialog.exec()
+
+def AlertVideo():
+    # Alert user via dialog that a video needs to be loaded
+    dialog = QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(dialog)
+    ui.setDialogDetails(dialog, title="Video loading failed!", text="Video must be loaded first!", textColor="#B41C2B")
     dialog.exec()
 
 def AlertPrediction():
