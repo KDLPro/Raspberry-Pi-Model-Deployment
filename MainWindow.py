@@ -226,6 +226,7 @@ class Ui_MainWindow(object):
         font.setPointSize(11)
         font.setBold(True)
         self.statusbar.setFont(font)
+        self.statusbar.setStyleSheet("background-color: rgb(240, 250, 240);")
         MainWindow.setStatusBar(self.statusbar)
         self.img_scene = QGraphicsScene()
         self.graph_scene = QGraphicsScene()
