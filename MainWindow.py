@@ -608,16 +608,20 @@ class Ui_MainWindow(object):
             QMessageBox.StandardButton.No,
         )
 
-        if reply == QMessageBox.StandardButton.Yes:
+        if ((self.offline == False) and (reply == QMessageBox.StandardButton.Yes)):
             # Perform any cleanup or save operations here
             print("Application is closing. Cleaning up...")
             
-            # Set system status to offline
-            response = (
-                        self.supabase.table("system_status")
-                        .insert({"online": False, "alert_code": 102})
-                        .execute()
-                    )
+            try:
+                # Set system status to offline
+                response = (
+                            self.supabase.table("system_status")
+                            .insert({"online": False, "alert_code": 102})
+                            .execute()
+                        )
+            except:
+                event.accept()
+                return
             
             event.accept()  # Accept the event and close the application
         else:
