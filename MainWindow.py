@@ -300,7 +300,6 @@ class Ui_MainWindow(object):
 
     def openImage(self):
         self.listWidget.hide()
-        self.update_status("Loading image...")
         self.open.setDisabled(True)
         self.open.setStyleSheet("background-color: rgb(0, 236, 96);")
 
@@ -310,6 +309,8 @@ class Ui_MainWindow(object):
         if (self.imgPath == ""):
             self.loadImageFail()
             return
+        
+        self.update_status("Loading image...")
 
         # Create a worker to handle predictions
         worker = Worker(self.processImage)
