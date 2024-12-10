@@ -348,14 +348,15 @@ class Ui_MainWindow(object):
             print("Loading image failed.")
 
     def loadImageFail(self):
-        # Clears the graphics view when image loading has failed, and resets variables
+        # Clears the graphics view and status bar when image loading has failed, and resets variables
+        self.statusbar.clearMessage()
         AlertImage()
         self.img_scene.clear()
         self.image.setStyleSheet("background-color: #AFBE87")
         self.imgPath = ""
         
-        self.loadImage.setDisabled(False)
-        self.loadImage.setStyleSheet("background-color: rgb(0, 170, 69);")
+        self.open.setDisabled(False)
+        self.open.setStyleSheet("background-color: rgb(0, 170, 69);")
 
     def generatePreds(self):
         self.update_status("Processing image...")
@@ -548,16 +549,16 @@ class Ui_MainWindow(object):
             self.predictionFail()
 
     def predictionFail(self):
-        # Clears the graphics view when image loading has failed, and resets variables
+        # Clears the graphics view and status bar when image loading has failed, and resets variables
+        self.statusbar.clearMessage()
         AlertPrediction()
-        
         self.predict.setDisabled(False)
         self.predict.setStyleSheet("background-color: rgb(0, 170, 69);")
 
     def img_load_done(self):
         self.update_status("Image loaded successfully!", timeout = 2000)
-        self.loadImage.setDisabled(False)
-        self.loadImage.setStyleSheet("background-color: rgb(0, 170, 69);")
+        self.open.setDisabled(False)
+        self.open.setStyleSheet("background-color: rgb(0, 170, 69);")
 
     def prediction_done(self):
         self.update_status("Prediction done!", timeout = 2000)
