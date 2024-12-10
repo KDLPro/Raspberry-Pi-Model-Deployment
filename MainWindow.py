@@ -199,7 +199,7 @@ class Ui_MainWindow(object):
         font.setPointSize(12)
         font.setBold(True)
         self.open.setFont(font)
-        self.open.setStyleSheet("background-color: rgb(0, 170, 69); border: none;")
+        self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
         self.open.setObjectName("loadImage")
         self.predict = QtWidgets.QPushButton(parent=self.centralwidget)
         self.predict.setGeometry(QtCore.QRect(350, 480, 110, 30))
@@ -217,7 +217,7 @@ class Ui_MainWindow(object):
         font.setPointSize(12)
         font.setBold(True)
         self.predict.setFont(font)
-        self.predict.setStyleSheet("background-color: rgb(0, 170, 69); border: none;")
+        self.predict.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
         self.predict.setObjectName("predict")
         self.listWidget = QtWidgets.QListWidget(parent=self.centralwidget)
         self.listWidget.setGeometry(QtCore.QRect(350, 109, 110, 50))
@@ -301,7 +301,7 @@ class Ui_MainWindow(object):
     def openImage(self):
         self.listWidget.hide()
         self.open.setDisabled(True)
-        self.open.setStyleSheet("background-color: rgb(0, 236, 96);")
+        self.open.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
 
         # Load image
         self.imgPath, _ = QFileDialog.getOpenFileName(self, caption="Open Image", filter="Image Files (*.png *.jpg *.bmp)")
@@ -398,7 +398,7 @@ class Ui_MainWindow(object):
     def generatePreds(self):
         self.update_status("Processing image...")
         self.predict.setDisabled(True)
-        self.predict.setStyleSheet("background-color: rgb(0, 236, 96);")
+        self.predict.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
 
         # Create a worker to handle predictions
         worker = Worker(self.loadModelAndPredict)
@@ -590,17 +590,17 @@ class Ui_MainWindow(object):
         self.statusbar.clearMessage()
         AlertPrediction()
         self.predict.setDisabled(False)
-        self.predict.setStyleSheet("background-color: rgb(0, 170, 69);")
+        self.predict.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
     def img_load_done(self):
         self.update_status("Image loaded successfully!", timeout = 2000)
         self.open.setDisabled(False)
-        self.open.setStyleSheet("background-color: rgb(0, 170, 69);")
+        self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
     def prediction_done(self):
         self.update_status("Prediction done!", timeout = 2000)
         self.predict.setDisabled(False)
-        self.predict.setStyleSheet("background-color: rgb(0, 170, 69);")
+        self.predict.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
     def update_status(self, message, timeout = 0):
         """
