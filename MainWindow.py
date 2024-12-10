@@ -301,6 +301,7 @@ class Ui_MainWindow(object):
     def openImage(self):
         self.listWidget.hide()
         self.open.setDisabled(True)
+        self.predict.setDisabled(True)
         self.open.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
 
         # Load image
@@ -398,6 +399,7 @@ class Ui_MainWindow(object):
     def generatePreds(self):
         self.update_status("Processing image...")
         self.predict.setDisabled(True)
+        self.open.setDisabled(True)
         self.predict.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
 
         # Create a worker to handle predictions
@@ -589,6 +591,7 @@ class Ui_MainWindow(object):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
         self.statusbar.clearMessage()
         AlertPrediction()
+        self.open.setDisabled(False)
         self.predict.setDisabled(False)
         self.predict.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
@@ -599,8 +602,13 @@ class Ui_MainWindow(object):
 
     def prediction_done(self):
         self.update_status("Prediction done!", timeout = 2000)
+        self.open.setDisabled(False)
         self.predict.setDisabled(False)
         self.predict.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
+        
+    def disableOpenMenu(self):
+        self.open.setDisabled(False)
+        self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
     def update_status(self, message, timeout = 0):
         """
