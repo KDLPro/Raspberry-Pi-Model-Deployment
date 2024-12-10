@@ -183,8 +183,8 @@ class Ui_MainWindow(object):
         self.label_3.setFont(font)
         self.label_3.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.label_3.setObjectName("label_3")
-        self.loadImage = QtWidgets.QPushButton(parent=self.centralwidget)
-        self.loadImage.setGeometry(QtCore.QRect(350, 80, 110, 30))
+        self.open = QtWidgets.QPushButton(parent=self.centralwidget)
+        self.open.setGeometry(QtCore.QRect(350, 80, 110, 30))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         brush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
@@ -193,14 +193,14 @@ class Ui_MainWindow(object):
         palette.setBrush(QtGui.QPalette.ColorGroup.Inactive, QtGui.QPalette.ColorRole.Light, brush)
         palette.setBrush(QtGui.QPalette.ColorGroup.Inactive, QtGui.QPalette.ColorRole.ButtonText, brush)
         palette.setBrush(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Light, brush)
-        self.loadImage.setPalette(palette)
+        self.open.setPalette(palette)
         font = QtGui.QFont()
         font.setFamily("Satoshi Medium")
         font.setPointSize(12)
         font.setBold(True)
-        self.loadImage.setFont(font)
-        self.loadImage.setStyleSheet("background-color: rgb(0, 170, 69);")
-        self.loadImage.setObjectName("loadImage")
+        self.open.setFont(font)
+        self.open.setStyleSheet("background-color: rgb(0, 170, 69); border: none;")
+        self.open.setObjectName("loadImage")
         self.predict = QtWidgets.QPushButton(parent=self.centralwidget)
         self.predict.setGeometry(QtCore.QRect(350, 480, 110, 30))
         palette = QtGui.QPalette()
@@ -217,8 +217,35 @@ class Ui_MainWindow(object):
         font.setPointSize(12)
         font.setBold(True)
         self.predict.setFont(font)
-        self.predict.setStyleSheet("background-color: rgb(0, 170, 69);")
+        self.predict.setStyleSheet("background-color: rgb(0, 170, 69); border: none;")
         self.predict.setObjectName("predict")
+        self.listWidget = QtWidgets.QListWidget(parent=self.centralwidget)
+        self.listWidget.setGeometry(QtCore.QRect(350, 109, 110, 50))
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
+        brush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
+        palette.setBrush(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Light, brush)
+        palette.setBrush(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Text, brush)
+        palette.setBrush(QtGui.QPalette.ColorGroup.Inactive, QtGui.QPalette.ColorRole.Light, brush)
+        palette.setBrush(QtGui.QPalette.ColorGroup.Inactive, QtGui.QPalette.ColorRole.Text, brush)
+        palette.setBrush(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Light, brush)
+        palette.setBrush(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, brush)
+        self.listWidget.setPalette(palette)
+        font = QtGui.QFont()
+        font.setFamily("Satoshi Medium")
+        font.setPointSize(12)
+        font.setBold(True)
+        self.listWidget.setFont(font)
+        self.listWidget.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); color: rgb(255, 255, 255);}\n"
+            "QListWidget::item:hover{background-color: rgb(134, 80, 46);} QListWidget::item:hover:selected{background-color: rgb(134, 80, 46);}"
+            "QListWidget::item:selected{background-color: rgb(0, 170, 69); color: rgb(255, 255, 255);}")
+        self.listWidget.setObjectName("listWidget")
+        item = QtWidgets.QListWidgetItem()
+        self.listWidget.addItem(item)
+        item = QtWidgets.QListWidgetItem()
+        self.listWidget.addItem(item)
+        self.listWidget.hide()
+        self.listWidget.itemClicked.connect(self.openListWidgetClicked)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -232,7 +259,7 @@ class Ui_MainWindow(object):
         self.graph_scene = QGraphicsScene()
 
         # Buttons to functions
-        self.loadImage.clicked.connect(self.openImage)
+        self.open.clicked.connect(self.openMenu)
         self.predict.clicked.connect(self.generatePreds)
 
         # Threads
@@ -264,10 +291,18 @@ class Ui_MainWindow(object):
         except:
             self.activateOfflineMode()
 
+    def openMenu(self):
+        self.listWidget.show()
+
+    def openListWidgetClicked(self, clickedItem):
+        if (clickedItem.text() == "Open Image"):
+            self.openImage()
+
     def openImage(self):
+        self.listWidget.hide()
         self.update_status("Loading image...")
-        self.loadImage.setDisabled(True)
-        self.loadImage.setStyleSheet("background-color: rgb(0, 236, 96);")
+        self.open.setDisabled(True)
+        self.open.setStyleSheet("background-color: rgb(0, 236, 96);")
 
         # Load image
         self.imgPath, _ = QFileDialog.getOpenFileName(self, caption="Open Image", filter="Image Files (*.png *.jpg *.bmp)")
@@ -280,7 +315,7 @@ class Ui_MainWindow(object):
         worker = Worker(self.processImage)
 
         worker.signals.result.connect(self.displayImage)
-        worker.signals.error.connect(self.loadImageFail)
+        worker.signals.error.connect(self.openFail)
         worker.signals.finished.connect(self.img_load_done)
 
         # Start the worker
@@ -591,10 +626,17 @@ class Ui_MainWindow(object):
         self.title_label.setText(_translate("MainWindow", "FiberWatch"))
         self.label_2.setText(_translate("MainWindow", "Image"))
         self.label_3.setText(_translate("MainWindow", "Detections"))
-        self.loadImage.setToolTip(_translate("MainWindow", "Loads an image for processing by the abaca fiber classification model."))
-        self.loadImage.setText(_translate("MainWindow", "Load Image"))
+        self.open.setToolTip(_translate("MainWindow", "Loads an image for processing by the abaca fiber classification model."))
+        self.open.setText(_translate("MainWindow", "Open"))
         self.predict.setToolTip(_translate("MainWindow", "Generates predictions based on the loaded image."))
         self.predict.setText(_translate("MainWindow", "Predict!"))
+        __sortingEnabled = self.listWidget.isSortingEnabled()
+        self.listWidget.setSortingEnabled(False)
+        item = self.listWidget.item(0)
+        item.setText(_translate("MainWindow", "Open Image"))
+        item = self.listWidget.item(1)
+        item.setText(_translate("MainWindow", "Open Video"))
+        self.listWidget.setSortingEnabled(__sortingEnabled)
 
     def closeEvent(self, event):
         """
