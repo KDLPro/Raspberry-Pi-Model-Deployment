@@ -429,8 +429,9 @@ class Ui_MainWindow(object):
         worker.signals.error.connect(self.loadVideoFail)
         worker.signals.finished.connect(self.video_load_done)
 
-        self.processVideo()
-
+        # Start the worker
+        self.thread_manager.start(worker)
+        
     def processVideo(self):
         try: 
             self.update_status("Processing video...")
