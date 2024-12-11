@@ -493,6 +493,9 @@ class Ui_MainWindow(object):
         self.open.setDisabled(True)
         self.predict.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
 
+        if self.imgPath == "":
+            AlertNoItemLoaded()
+
         # Create a worker to handle predictions
         worker = Worker(self.loadModelAndPredict)
 
@@ -802,6 +805,17 @@ def AlertPrediction():
     ui.setDialogDetails(dialog, 
                         title="No Internet Connection", 
                         text="Cannot upload results to online database. \nPlease check your Internet connection \nand try again.", 
+                        textColor="#B41C2B")
+    dialog.exec()
+
+def AlertNoItemLoaded():
+    # Alert user via dialog that the predictions can't be uploaded
+    dialog = QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(dialog)
+    ui.setDialogDetails(dialog, 
+                        title="No image or video loaded!", 
+                        text="Please load an image or video first!", 
                         textColor="#B41C2B")
     dialog.exec()
 
