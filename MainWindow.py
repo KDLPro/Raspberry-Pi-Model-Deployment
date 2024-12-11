@@ -450,6 +450,8 @@ class Ui_MainWindow(object):
             self.video_timer.timeout.connect(self.update_frame)
             self.video_timer.start(video_frame_interval)
 
+            self.statusbar.clearMessage()
+
         except Exception as e:
             raise e  # Worker will emit error signal
         
