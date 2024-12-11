@@ -268,7 +268,7 @@ class Ui_MainWindow(object):
 
         # Variables
         self.imgPath = ""
-        self.videoPath = ""
+        self.vidPath = ""
         self.video_cap, self.video_timer = None, None
         self.grade_s2 = [0]
         self.grade_s3 = [0]
@@ -313,7 +313,7 @@ class Ui_MainWindow(object):
 
         # Load image
         self.imgPath, _ = QFileDialog.getOpenFileName(self, caption="Open Image", filter="Image Files (*.png *.jpg *.bmp)")
-        self.videoPath = ""
+        self.vidPath = ""
 
         if (self.imgPath == ""):
             self.loadImageFail()
@@ -414,10 +414,10 @@ class Ui_MainWindow(object):
         self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
         # Load image
-        self.videoPath, _ = QFileDialog.getOpenFileName(self, caption="Open Video", filter="Video Files (*.mp4 *.flv *.ts *.mts *.avi)")
+        self.vidPath, _ = QFileDialog.getOpenFileName(self, caption="Open Video", filter="Video Files (*.mp4 *.flv *.ts *.mts *.avi)")
         self.imgPath = ""
 
-        if (self.videoPath == ""):
+        if (self.vidPath == ""):
             self.loadVideoFail()
             return
         
@@ -435,7 +435,7 @@ class Ui_MainWindow(object):
         try: 
             self.update_status("Processing video...")
 
-            self.video_cap = cv2.VideoCapture(self.videoPath)
+            self.video_cap = cv2.VideoCapture(self.vidPath)
 
             video_fps = self.video_cap.get(cv2.CAP_PROP_FPS)  # Get FPS from the video file
             video_frame_interval = int(1000 / (video_fps if video_fps > 0 else 30))  # Default to 30 FPS if FPS is 0
