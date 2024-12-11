@@ -11,8 +11,8 @@ from Dialog import Ui_Dialog
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QGraphicsScene, QDialog, QGraphicsPixmapItem, QMessageBox
-from PyQt6.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject, pyqtSlot
 from PyQt6.QtGui import QPixmap, QImage
+from PyQt6.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject, pyqtSlot, QTimer
 
 import cv2
 
@@ -257,6 +257,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.img_or_vid_scene = QGraphicsScene()
         self.graph_scene = QGraphicsScene()
+        self.video_pixmap_item = QGraphicsPixmapItem()
 
         # Buttons to functions
         self.open.clicked.connect(self.openMenu)
@@ -267,6 +268,8 @@ class Ui_MainWindow(object):
 
         # Variables
         self.imgPath = ""
+        self.videoPath = ""
+        self.video_cap, self.video_timer = None, None
         self.grade_s2 = [0]
         self.grade_s3 = [0]
         self.length_grades = [0]
@@ -301,6 +304,8 @@ class Ui_MainWindow(object):
             self.openVideo()
 
     def openImage(self):
+        if self.video_cap != None:
+            self.video_cap.release()
         self.listWidget.hide()
         self.open.setDisabled(True)
         self.predict.setDisabled(True)
@@ -308,6 +313,7 @@ class Ui_MainWindow(object):
 
         # Load image
         self.imgPath, _ = QFileDialog.getOpenFileName(self, caption="Open Image", filter="Image Files (*.png *.jpg *.bmp)")
+        self.videoPath = ""
 
         if (self.imgPath == ""):
             self.loadImageFail()
@@ -391,6 +397,8 @@ class Ui_MainWindow(object):
     def loadImageFail(self):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
         self.statusbar.clearMessage()
+        self.open.setDisabled(False)
+        self.predict.setDisabled(False)
         AlertImage()
         self.img_or_vid_scene.clear()
         self.image_or_video.setStyleSheet("background-color: #AFBE87")
@@ -398,6 +406,8 @@ class Ui_MainWindow(object):
         self.disableOpenMenu()
 
     def openVideo(self):
+        if self.video_cap != None:
+            self.video_cap.release()
         self.listWidget.hide()
         self.open.setDisabled(True)
         self.predict.setDisabled(True)
@@ -405,19 +415,75 @@ class Ui_MainWindow(object):
 
         # Load image
         self.videoPath, _ = QFileDialog.getOpenFileName(self, caption="Open Video", filter="Video Files (*.mp4 *.flv *.ts *.mts *.avi)")
+        self.imgPath = ""
 
         if (self.videoPath == ""):
             self.loadVideoFail()
             return
         
-        self.update_status("Loading image...")
+        self.update_status("Loading video...")
+
+        # Create a worker to handle loading video
+        worker = Worker(self.processVideo)
+
+        worker.signals.error.connect(self.loadVideoFail)
+        worker.signals.finished.connect(self.video_load_done)
+
+        self.processVideo()
+
+    def processVideo(self):
+        try: 
+            self.update_status("Processing video...")
+
+            self.video_cap = cv2.VideoCapture(self.videoPath)
+
+            video_fps = self.video_cap.get(cv2.CAP_PROP_FPS)  # Get FPS from the video file
+            video_frame_interval = int(1000 / (video_fps if video_fps > 0 else 30))  # Default to 30 FPS if FPS is 0
+
+            self.img_or_vid_scene.clear()
+            self.video_pixmap_item = QGraphicsPixmapItem()
+            self.img_or_vid_scene.addItem(self.video_pixmap_item)
+            self.image_or_video.setScene(self.img_or_vid_scene)
+
+            self.video_timer = QTimer()
+            self.video_timer.timeout.connect(self.update_frame)
+            self.video_timer.start(video_frame_interval)
+
+        except Exception as e:
+            raise e  # Worker will emit error signal
+        
+    def update_frame(self):
+        # Read frame
+        ret, frame = self.video_cap.read()
+        if not ret:
+            self.video_timer.stop()  # Stop the timer if no more frames
+            return
+        
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Resize the frame to fit the QGraphicsView
+        view_width = self.image_or_video.width() - 2
+        view_height = self.image_or_video.height() - 2
+        frame_height, frame_width, _ = frame.shape
+        scaling_factor = min(view_width / frame_width, view_height / frame_height)
+        new_width = int(frame_width * scaling_factor)
+        new_height = int(frame_height * scaling_factor)
+        frame = cv2.resize(frame, (new_width, new_height))
+
+        height, width, channel = frame.shape
+        bytes_per_line = channel * width
+        q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+
+        self.video_pixmap_item.setPixmap(QPixmap.fromImage(q_image))
 
     def loadVideoFail(self):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
         self.statusbar.clearMessage()
-        AlertImage()
-        self.img_scene.clear()
-        self.image.setStyleSheet("background-color: #AFBE87")
+        self.open.setDisabled(False)
+        self.predict.setDisabled(False)
+        AlertVideo()
+        self.img_or_vid_scene.clear()
+        self.image_or_video.setStyleSheet("background-color: #AFBE87")
         self.imgPath = ""
         self.disableOpenMenu()
 
@@ -626,6 +692,11 @@ class Ui_MainWindow(object):
         self.open.setDisabled(False)
         self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
+    def video_load_done(self):
+        self.update_status("Video loaded successfully!", timeout = 2000)
+        self.open.setDisabled(False)
+        self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
+
     def prediction_done(self):
         self.update_status("Prediction done!", timeout = 2000)
         self.open.setDisabled(False)
@@ -697,6 +768,8 @@ class Ui_MainWindow(object):
                             .insert({"online": False, "alert_code": 102})
                             .execute()
                         )
+                if self.video_cap != None:
+                    self.video_cap.release()
             except:
                 event.accept()
                 return
