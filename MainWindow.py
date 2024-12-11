@@ -137,19 +137,19 @@ class Ui_MainWindow(object):
         self.title_label.setStyleSheet("color: rgb(0, 85, 0)")
         self.title_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.title_label.setObjectName("title_label")
-        self.image = QtWidgets.QGraphicsView(parent=self.centralwidget)
-        self.image.setGeometry(QtCore.QRect(50, 120, 410, 350))
+        self.image_or_video = QtWidgets.QGraphicsView(parent=self.centralwidget)
+        self.image_or_video.setGeometry(QtCore.QRect(50, 120, 410, 350))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.image.sizePolicy().hasHeightForWidth())
-        self.image.setSizePolicy(sizePolicy)
-        self.image.setMaximumSize(QtCore.QSize(410, 350))
-        self.image.setStyleSheet("background-color: #AFBE87")
-        self.image.setFrameShape(QtWidgets.QFrame.Shape.Box)
-        self.image.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
-        self.image.setLineWidth(1)
-        self.image.setObjectName("image")
+        sizePolicy.setHeightForWidth(self.image_or_video.sizePolicy().hasHeightForWidth())
+        self.image_or_video.setSizePolicy(sizePolicy)
+        self.image_or_video.setMaximumSize(QtCore.QSize(410, 350))
+        self.image_or_video.setStyleSheet("background-color: #AFBE87")
+        self.image_or_video.setFrameShape(QtWidgets.QFrame.Shape.Box)
+        self.image_or_video.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
+        self.image_or_video.setLineWidth(1)
+        self.image_or_video.setObjectName("image")
         self.graph = QtWidgets.QGraphicsView(parent=self.centralwidget)
         self.graph.setGeometry(QtCore.QRect(564, 120, 410, 350))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
@@ -255,7 +255,7 @@ class Ui_MainWindow(object):
         self.statusbar.setFont(font)
         self.statusbar.setStyleSheet("background-color: rgb(240, 250, 240);")
         MainWindow.setStatusBar(self.statusbar)
-        self.img_scene = QGraphicsScene()
+        self.img_or_vid_scene = QGraphicsScene()
         self.graph_scene = QGraphicsScene()
 
         # Buttons to functions
@@ -332,12 +332,12 @@ class Ui_MainWindow(object):
             cv_image = cv2.imread(self.imgPath, cv2.IMREAD_UNCHANGED)
 
             # Clear scene
-            self.img_scene.clear()
-            self.image.resetTransform()
+            self.img_or_vid_scene.clear()
+            self.image_or_video.resetTransform()
 
             # Resize image using OpenCV
-            view_width = self.image.width() - 2
-            view_height = self.image.height() - 2
+            view_width = self.image_or_video.width() - 2
+            view_height = self.image_or_video.height() - 2
             
             original_width = cv_image.shape[1]
             original_height = cv_image.shape[0]
@@ -374,13 +374,14 @@ class Ui_MainWindow(object):
             
             # Display image in the graphics window
             pixmap_item = QGraphicsPixmapItem(scaledPixmap)
-            self.image.setStyleSheet("background-color: #FFFFFF")
+            self.image_or_video.setStyleSheet("background-color: #FFFFFF")
 
-            self.img_scene.addItem(pixmap_item)
-            self.image.fitInView(self.img_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
-            self.image.centerOn(255, 295)
-            self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.image.setScene(self.img_scene)
+            self.img_or_vid_scene.clear()
+            self.img_or_vid_scene.addItem(pixmap_item)
+            self.image_or_video.fitInView(self.img_or_vid_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+            self.image_or_video.centerOn(255, 295)
+            self.image_or_video.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.image_or_video.setScene(self.img_or_vid_scene)
 
             self.statusbar.clearMessage()
 
@@ -391,8 +392,8 @@ class Ui_MainWindow(object):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
         self.statusbar.clearMessage()
         AlertImage()
-        self.img_scene.clear()
-        self.image.setStyleSheet("background-color: #AFBE87")
+        self.img_or_vid_scene.clear()
+        self.image_or_video.setStyleSheet("background-color: #AFBE87")
         self.imgPath = ""
         self.disableOpenMenu()
 
@@ -480,8 +481,8 @@ class Ui_MainWindow(object):
             cv_image = cv2.imread(result_arr[0], cv2.IMREAD_UNCHANGED)
 
             # Resize image using OpenCV
-            view_width = self.image.width() - 2
-            view_height = self.image.height() - 2
+            view_width = self.image_or_video.width() - 2
+            view_height = self.image_or_video.height() - 2
             
             original_width = cv_image.shape[1]
             original_height = cv_image.shape[0]
@@ -511,13 +512,14 @@ class Ui_MainWindow(object):
             
             # Display image in the graphics window
             pixmap_item = QGraphicsPixmapItem(scaledPixmap)
-            self.image.setStyleSheet("background-color: #FFFFFF")
+            self.image_or_video.setStyleSheet("background-color: #FFFFFF")
 
-            self.img_scene.addItem(pixmap_item)
-            self.image.fitInView(self.img_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
-            self.image.centerOn(255, 295)
-            self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.image.setScene(self.img_scene)
+            self.img_or_vid_scene.clear()
+            self.img_or_vid_scene.addItem(pixmap_item)
+            self.image_or_video.fitInView(self.img_or_vid_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+            self.image_or_video.centerOn(255, 295)
+            self.image_or_video.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.image_or_video.setScene(self.img_or_vid_scene)
 
             # Get data about the classification results
             grade_indices = []
