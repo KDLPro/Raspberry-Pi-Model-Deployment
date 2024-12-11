@@ -315,7 +315,7 @@ class Ui_MainWindow(object):
         
         self.update_status("Loading image...")
 
-        # Create a worker to handle predictions
+        # Create a worker to handle loading image
         worker = Worker(self.processImage)
 
         worker.signals.result.connect(self.displayImage)
