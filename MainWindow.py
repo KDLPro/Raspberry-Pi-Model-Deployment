@@ -426,6 +426,7 @@ class Ui_MainWindow(object):
         # Create a worker to handle loading video
         worker = Worker(self.processVideo)
 
+        worker.signals.result.connect(self.displayVideo)
         worker.signals.error.connect(self.loadVideoFail)
         worker.signals.finished.connect(self.video_load_done)
 
@@ -441,6 +442,13 @@ class Ui_MainWindow(object):
             video_fps = self.video_cap.get(cv2.CAP_PROP_FPS)  # Get FPS from the video file
             video_frame_interval = int(1000 / (video_fps if video_fps > 0 else 30))  # Default to 30 FPS if FPS is 0
 
+            return video_frame_interval
+
+        except Exception as e:
+            raise e  # Worker will emit error signal
+        
+    def displayVideo(self, video_frame_interval):
+        try:
             self.img_or_vid_scene.clear()
             self.video_pixmap_item = QGraphicsPixmapItem()
             self.img_or_vid_scene.addItem(self.video_pixmap_item)
@@ -459,7 +467,8 @@ class Ui_MainWindow(object):
         # Read frame
         ret, frame = self.video_cap.read()
         if not ret:
-            self.video_timer.stop()  # Stop the timer if no more frames
+            self.video_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)          # Reset video timer
+            self.statusbar.clearMessage()
             return
         
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
