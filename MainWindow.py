@@ -705,11 +705,13 @@ class Ui_MainWindow(object):
     def img_load_done(self):
         self.update_status("Image loaded successfully!", timeout = 2000)
         self.open.setDisabled(False)
+        self.predict.setDisabled(False)
         self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
     def video_load_done(self):
         self.update_status("Video loaded successfully!", timeout = 2000)
         self.open.setDisabled(False)
+        self.predict.setDisabled(False)
         self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
     def prediction_done(self):
