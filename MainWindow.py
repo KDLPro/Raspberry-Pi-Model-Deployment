@@ -11,8 +11,8 @@ from Dialog import Ui_Dialog
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QGraphicsScene, QDialog, QGraphicsPixmapItem, QMessageBox
-from PyQt6.QtGui import QPixmap, QImage, QFont
 from PyQt6.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject, pyqtSlot
+from PyQt6.QtGui import QPixmap, QImage
 
 import cv2
 
