@@ -795,6 +795,8 @@ class Ui_MainWindow(object):
     def handleVidPredResult(self, labels_dir):
         self.img_or_vid_scene.clear()
 
+        final_grades = [0, 0]
+
         for filename in os.listdir(labels_dir):
         # Check if the file has a .txt extension
             if filename.endswith('.txt'):
@@ -819,6 +821,9 @@ class Ui_MainWindow(object):
                         elif i == 1:        # Grade S3
                             grades[1] += 1
 
+                    final_grades[0] += grades[0]
+                    final_grades[1] += grades[1]
+
                     if self.offline == False:
                         # Uploading results to Supabase
                         self.update_status("Uploading results to Supabase database...")
@@ -839,6 +844,17 @@ class Ui_MainWindow(object):
                     self.length_grades.append(len(self.length_grades))
                 except Exception as e:
                     print(f"Error reading {filename}: {e}")
+
+        if self.offline == False:
+            # Uploading results to Supabase
+            self.update_status("Uploading results to Supabase database...")
+            for i in range(2):
+                grade_code = "S2" if (i == 1) else "S3"
+                response = (
+                    self.supabase.table("fiber_scanning_logs")
+                    .insert({"fiber_grade": grade_code, "number_of_fibers": final_grades[i]})
+                    .execute()
+                )
 
         # Display graph
         self.update_status("Displaying graph...")
