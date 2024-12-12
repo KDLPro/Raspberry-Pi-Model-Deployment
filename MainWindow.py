@@ -917,7 +917,6 @@ class Ui_MainWindow(object):
         self.start_video_processing()
 
     def start_video_processing(self):
-        print(self.vidPath)
 
         # Create a worker to handle loading video
         worker = Worker(self.processVideo)
