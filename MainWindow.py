@@ -650,6 +650,8 @@ class Ui_MainWindow(object):
 
     def handleImgPredResult(self, result_arr):
         try: 
+            _translate = QtCore.QCoreApplication.translate
+            self.label_2.setText(_translate("MainWindow", "Image Output"))
             # Process image first
             cv_image = cv2.imread(result_arr[0], cv2.IMREAD_UNCHANGED)
 
