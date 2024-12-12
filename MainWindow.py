@@ -76,9 +76,7 @@ class Worker(QRunnable):
         '''
 
         try:
-            result = self.function(
-                *self.args, **self.kwargs
-            )
+            result = self.function(*self.args, **self.kwargs)
         except:
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]
