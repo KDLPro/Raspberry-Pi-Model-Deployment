@@ -888,7 +888,7 @@ class Ui_MainWindow(object):
     def predictionFail(self):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
         self.statusbar.clearMessage()
-        AlertPrediction()
+        AlertPrediction(self.offline)
         self.open.setDisabled(False)
         self.predict.setDisabled(False)
         self.predict.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
@@ -1029,15 +1029,21 @@ def AlertVideo():
     ui.setDialogDetails(dialog, title="Video loading failed!", text="Video must be loaded first!", textColor="#B41C2B")
     dialog.exec()
 
-def AlertPrediction():
+def AlertPrediction(offline):
     # Alert user via dialog that the predictions can't be uploaded
     dialog = QDialog()
     ui = Ui_Dialog()
     ui.setupUi(dialog)
-    ui.setDialogDetails(dialog, 
-                        title="No Internet Connection", 
-                        text="Cannot upload results to online database. \nPlease check your Internet connection \nand try again.", 
-                        textColor="#B41C2B")
+    if offline:
+        ui.setDialogDetails(dialog, 
+                            title="No Internet Connection", 
+                            text="Cannot upload results to online database. \nPlease check your Internet connection \nand try again.", 
+                            textColor="#B41C2B")
+    else:
+        ui.setDialogDetails(dialog, 
+                            title="Generating predictions failed!", 
+                            text="Generating predictions failed! \nIf you used a video, please try a smaller file.", 
+                            textColor="#B41C2B")
     dialog.exec()
 
 def AlertNoItemLoaded():
