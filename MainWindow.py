@@ -13,6 +13,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QGraphicsScene, QDialog, QGraphicsPixmapItem, QMessageBox
 from PyQt6.QtGui import QPixmap, QImage, QMovie
 from PyQt6.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject, pyqtSlot
+import traceback
 
 import cv2
 
