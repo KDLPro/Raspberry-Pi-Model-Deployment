@@ -453,7 +453,6 @@ class Ui_MainWindow(object):
 
             self.video_cap = cv2.VideoCapture(self.vidPath)
             video_fps = self.video_cap.get(cv2.CAP_PROP_FPS)
-            print("Video fps:", video_fps)
             target_fps = 30  # Desired FPS for the GIF
             video_frame_interval = int(1000 / target_fps)  # Interval in milliseconds for 30 FPS
 
@@ -478,8 +477,6 @@ class Ui_MainWindow(object):
                     self.update_status("Processing video: " + str(frame_count) + " frame processed")
                 else:
                     self.update_status("Processing video: " + str(frame_count) + " frames processed")
-
-            print(frame_count)
 
             # Convert frames to GIF using Pillow
             self.createGIF(frames)
