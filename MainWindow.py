@@ -728,11 +728,14 @@ class Ui_MainWindow(object):
                     if grades[i] == 0:
                         continue
                     grade_code = "S2" if (i == 1) else "S3"
-                    response = (
-                        self.supabase.table("fiber_scanning_logs")
-                        .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
-                        .execute()
-                    )
+                    try: 
+                        response = (
+                            self.supabase.table("fiber_scanning_logs")
+                            .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
+                            .execute()
+                        )
+                    except:
+                        self.offline = True
 
             self.length_grades.append(len(self.length_grades))
 
