@@ -319,6 +319,9 @@ class Ui_MainWindow(object):
         self.imgPath, _ = QFileDialog.getOpenFileName(self, caption="Open Image", filter="Image Files (*.png *.jpg *.bmp)")
         self.vidPath = ""
 
+        _translate = QtCore.QCoreApplication.translate
+        self.label_2.setText(_translate("MainWindow", "Image"))
+
         if (self.imgPath == ""):
             self.loadImageFail()
             return
@@ -420,6 +423,9 @@ class Ui_MainWindow(object):
         # Load image
         self.vidPath, _ = QFileDialog.getOpenFileName(self, caption="Open Video", filter="Video Files (*.mp4 *.flv *.ts *.mts *.avi)")
         self.imgPath = ""
+
+        _translate = QtCore.QCoreApplication.translate
+        self.label_2.setText(_translate("MainWindow", "Video"))
 
         if (self.vidPath == ""):
             self.loadVideoFail()
