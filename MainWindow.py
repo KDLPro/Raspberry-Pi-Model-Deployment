@@ -17,6 +17,10 @@ import traceback
 
 import cv2
 
+from PIL import Image
+
+import ffmpeg
+
 from ultralytics import YOLO
 
 from supabase import create_client
@@ -552,23 +556,34 @@ class Ui_MainWindow(object):
         self.disableOpenMenu()
 
     def generatePreds(self):
-        self.update_status("Processing image...")
-        self.predict.setDisabled(True)
-        self.open.setDisabled(True)
-        self.predict.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
+        if self.imgPath != "" or self.vidPath != "":
+            self.predict.setDisabled(True)
+            self.open.setDisabled(True)
+            self.predict.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
+            if self.video_cap != None:
+                self.video_cap.release()
+            if self.movie != None:
+                self.movie.stop()
+            self.movie = None
 
-        if self.imgPath == "":
+            # Create a worker to handle predictions
+            worker = Worker(self.loadModelAndPredict)
+
+            if self.imgPath != "" or self.vidPath == "":              # If image is loaded
+                self.update_status("Processing image...")
+                worker.signals.result.connect(self.handleImgPredResult)
+                worker.signals.finished.connect(self.img_prediction_done)
+            elif self.imgPath == "" or self.vidPath != "":              # If video is loaded
+                self.update_status("Processing video...")
+                worker.signals.result.connect(self.handleVidPredResult)
+                worker.signals.finished.connect(self.vid_prediction_done)
+
+            worker.signals.error.connect(self.predictionFail)
+
+            # Start the worker
+            self.thread_manager.start(worker)
+        else:               # No image or video loaded
             AlertNoItemLoaded()
-
-        # Create a worker to handle predictions
-        worker = Worker(self.loadModelAndPredict)
-
-        worker.signals.result.connect(self.handlePredResult)
-        worker.signals.error.connect(self.predictionFail)
-        worker.signals.finished.connect(self.prediction_done)
-
-        # Start the worker
-        self.thread_manager.start(worker)
         
     def loadModelAndPredict(self):
         curr_dir = os.getcwd()
@@ -583,7 +598,6 @@ class Ui_MainWindow(object):
             print(f"Error: {e.strerror}.")
 
         os.makedirs(custom_save_dir, exist_ok=True)
-        print(custom_save_dir)
 
         # Load a YOLO11n PyTorch model and export to NCNN format
         
@@ -592,23 +606,52 @@ class Ui_MainWindow(object):
             model.export(format="ncnn") 
 
         ncnn_model = YOLO("models/November-23_ncnn_model", task="detect")
-        results = ncnn_model.predict(self.imgPath, project=custom_save_dir, save=True, exist_ok=True, save_txt=True, iou=0.2, agnostic_nms=True)
 
-        # Get image location
-        base_img = os.path.basename(self.imgPath)
-        final_img = os.path.join(custom_save_dir, "predict", base_img)
-        final_img = os.path.normpath(final_img) 
+        if self.imgPath != "" or self.vidPath == "":              # If image is loaded
+            results = ncnn_model.predict(self.imgPath, project=custom_save_dir, save=True, exist_ok=True, save_txt=True, iou=0.2, agnostic_nms=True)
 
-        # Get labels location
-        img_without_ext = os.path.splitext(base_img)[0]
-        labels_dir = os.path.join(custom_save_dir, "predict", "labels")
-        labels_dir = os.path.normpath(labels_dir)
-        txt_file = os.path.join(labels_dir, f"{img_without_ext}.txt")
-        txt_file = os.path.normpath(txt_file)
+            # Get image location
+            base_img = os.path.basename(self.imgPath)
+            final_img = os.path.join(custom_save_dir, "predict", base_img)
+            final_img = os.path.normpath(final_img) 
 
-        return [final_img, txt_file]
+            # Get labels location
+            img_without_ext = os.path.splitext(base_img)[0]
+            labels_dir = os.path.join(custom_save_dir, "predict", "labels")
+            labels_dir = os.path.normpath(labels_dir)
+            txt_file = os.path.join(labels_dir, f"{img_without_ext}.txt")
+            txt_file = os.path.normpath(txt_file)
 
-    def handlePredResult(self, result_arr):
+            return [final_img, txt_file]
+        
+        elif self.imgPath == "" or self.vidPath != "":              # If video is loaded
+            results = ncnn_model.predict(self.vidPath, project=custom_save_dir, save=True, exist_ok=True, save_txt=True, iou=0.2, agnostic_nms=True)
+
+            # Get video location
+            base_vid = os.path.basename(self.vidPath)
+            vid_without_ext = os.path.splitext(base_vid)[0]
+            final_vid_avi = os.path.join(custom_save_dir, "predict", vid_without_ext + ".avi")
+            final_vid_avi = os.path.normpath(final_vid_avi) 
+            final_vid_mp4 = os.path.join(custom_save_dir, "predict", vid_without_ext + ".mp4")
+            final_vid_mp4 = os.path.normpath(final_vid_mp4) 
+
+            try:
+                self.update_status("Converting resulting video to mp4")
+                # Use FFmpeg to convert the AVI to MP4
+                ffmpeg.input(final_vid_avi).output(final_vid_mp4, vcodec='libx264', acodec='aac').run()
+                self.update_status(f"Converting result video successful: {final_vid_avi} to {final_vid_mp4}")
+            except ffmpeg.Error as e:
+                print(f"Error converting video: {e}")
+
+            self.vidPath = final_vid_mp4
+
+            # Get labels directory
+            labels_dir = os.path.join(custom_save_dir, "predict", "labels")
+            labels_dir = os.path.normpath(labels_dir)
+
+            return labels_dir
+
+    def handleImgPredResult(self, result_arr):
         try: 
             # Process image first
             cv_image = cv2.imread(result_arr[0], cv2.IMREAD_UNCHANGED)
@@ -746,6 +789,9 @@ class Ui_MainWindow(object):
         except Exception as e:
             self.predictionFail()
 
+    def handleVidPredResult(self, labels_dir):
+        self.img_or_vid_scene.clear()
+
     def predictionFail(self):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
         self.statusbar.clearMessage()
@@ -766,11 +812,36 @@ class Ui_MainWindow(object):
         self.predict.setDisabled(False)
         self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
 
-    def prediction_done(self):
+    def img_prediction_done(self):
         self.update_status("Prediction done!", timeout = 2000)
         self.open.setDisabled(False)
         self.predict.setDisabled(False)
         self.predict.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
+        self.imgPath = ""
+
+    def vid_prediction_done(self):
+        self.update_status("Loading video...")
+        self.start_video_processing()
+
+    def start_video_processing(self):
+        print(self.vidPath)
+
+        # Create a worker to handle loading video
+        worker = Worker(self.processVideo)
+
+        worker.signals.result.connect(self.displayVideo)
+        worker.signals.error.connect(self.loadVideoFail)
+        worker.signals.finished.connect(self.pred_video_load_done)
+
+        # Start the worker
+        self.thread_manager.start(worker)
+
+    def pred_video_load_done(self):
+        self.update_status("Prediction done!", timeout = 2000)
+        self.open.setDisabled(False)
+        self.predict.setDisabled(False)
+        self.predict.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
+        self.vidPath = ""
         
     def disableOpenMenu(self):
         self.open.setDisabled(False)
