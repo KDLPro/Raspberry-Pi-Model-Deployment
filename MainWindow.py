@@ -169,7 +169,7 @@ class Ui_MainWindow(object):
         self.graph.setLineWidth(1)
         self.graph.setObjectName("graph")
         self.label_2 = QtWidgets.QLabel(parent=self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(205, 80, 100, 30))
+        self.label_2.setGeometry(QtCore.QRect(155, 80, 200, 30))
         font = QtGui.QFont()
         font.setFamily("Satoshi Medium")
         font.setPointSize(18)
@@ -652,6 +652,7 @@ class Ui_MainWindow(object):
         try: 
             _translate = QtCore.QCoreApplication.translate
             self.label_2.setText(_translate("MainWindow", "Image Output"))
+
             # Process image first
             cv_image = cv2.imread(result_arr[0], cv2.IMREAD_UNCHANGED)
 
@@ -919,6 +920,8 @@ class Ui_MainWindow(object):
         self.start_video_processing()
 
     def start_video_processing(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.label_2.setText(_translate("MainWindow", "Video Output"))
 
         # Create a worker to handle loading video
         worker = Worker(self.processVideo)
