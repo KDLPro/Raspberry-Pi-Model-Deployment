@@ -789,6 +789,102 @@ class Ui_MainWindow(object):
     def handleVidPredResult(self, labels_dir):
         self.img_or_vid_scene.clear()
 
+        for filename in os.listdir(labels_dir):
+        # Check if the file has a .txt extension
+            if filename.endswith('.txt'):
+                file_path = os.path.join(labels_dir, filename)
+                try:
+                    grade_indices = []
+                    with open(file_path, "r") as file:
+                        for line in file:
+                            tokens = line.split()
+                            if tokens and tokens[0].isdigit():
+                                grade_indices.append(int(tokens[0]))
+                            elif tokens:  # Try converting non-integer numbers (e.g., float)
+                                try:
+                                    grade_indices.append(float(tokens[0]))
+                                except ValueError:
+                                    pass
+
+                    grades = [0, 0]
+                    for i in grade_indices:
+                        if i == 0:          # Grade S2
+                            grades[0] += 1
+                        elif i == 1:        # Grade S3
+                            grades[1] += 1
+
+                    if self.offline == False:
+                        # Uploading results to Supabase
+                        self.update_status("Uploading results to Supabase database...")
+                        for i in range(2):
+                            if i == 0:
+                                self.grade_s2.append(grades[0])
+                            else:
+                                self.grade_s3.append(grades[1])
+                            if grades[i] == 0:
+                                continue
+                            grade_code = "S2" if (i == 1) else "S3"
+                            response = (
+                                self.supabase.table("fiber_scanning_logs")
+                                .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
+                                .execute()
+                            )
+
+                    self.length_grades.append(len(self.length_grades))
+                except Exception as e:
+                    print(f"Error reading {filename}: {e}")
+
+        # Display graph
+        self.update_status("Displaying graph...")
+
+        SatoshiLabel = {
+            "family" : "Satoshi",
+            "color":  "#006328",
+            "weight": "medium",
+            "size": 12,
+        }
+
+        # Initialize graph
+
+        # Desired pixel dimensions
+        width_px = 820
+        height_px = 700
+        dpi = 250  # Adjust DPI as needed
+
+        # Convert pixel dimensions to inches
+        width_in = width_px / dpi
+        height_in = height_px / dpi
+
+        # Create the figure
+        fig, ax = plt.subplots(figsize=(width_in, height_in), dpi=dpi)
+        ax.plot(self.length_grades, self.grade_s2, label = "Grade S2", color = "#D0C7AA")
+        ax.plot(self.length_grades, self.grade_s3, label = "Grade S3", color = "#825B43")
+        ax.set_ylabel("Number of Fibers", fontdict = SatoshiLabel, labelpad=5)
+        ax.tick_params(axis = "both", labelsize = 10, labelfontfamily = "Satoshi")
+        ax.legend()
+        plt.tight_layout(pad=1)
+
+        # Convert to cv2 image
+        canvas = FigureCanvasAgg(fig)
+        canvas.draw()
+        fig.tight_layout()
+        buf = canvas.buffer_rgba()
+        image = np.asarray(buf)
+        image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        resized_image = cv2.resize(image_bgr, (410, 350))
+        height, width, channels = resized_image.shape
+        qimage = QImage(resized_image.data, width, height, 3 * width, QImage.Format.Format_BGR888)
+        pixmap = QPixmap.fromImage(qimage)
+
+        # Display graph
+        pixmap_item = self.graph_scene.addPixmap(pixmap)
+        pixmap_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+        self.graph.fitInView(pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+        self.graph.setScene(self.graph_scene)
+
+        print(self.grade_s2)
+        print(self.grade_s3)
+
     def predictionFail(self):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
         self.statusbar.clearMessage()
