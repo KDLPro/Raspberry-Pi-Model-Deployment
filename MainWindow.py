@@ -422,7 +422,7 @@ class Ui_MainWindow(object):
         self.listWidget.hide()
         self.open.setDisabled(True)
         self.predict.setDisabled(True)
-        self.open.setStyleSheet("QWidget{background-color: rgb(0, 170, 69); border: none;} QToolTip {background-color: white;}")
+        self.open.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
 
         # Load image
         self.vidPath, _ = QFileDialog.getOpenFileName(self, caption="Open Video", filter="Video Files (*.mp4 *.flv *.ts *.mts *.avi)")
