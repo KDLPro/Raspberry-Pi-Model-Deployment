@@ -403,10 +403,7 @@ class Ui_MainWindow(object):
         self.open.setDisabled(False)
         self.predict.setDisabled(False)
         AlertImage()
-        self.img_or_vid_scene.clear()
-        self.image_or_video.setStyleSheet("background-color: #AFBE87")
-        self.imgPath = ""
-        self.disableOpenMenu()
+        self.resetScene()
 
     def openVideo(self):
         if self.video_cap != None:
@@ -536,9 +533,15 @@ class Ui_MainWindow(object):
         self.open.setDisabled(False)
         self.predict.setDisabled(False)
         AlertVideo()
+        self.resetScene()
+
+    def resetScene(self):
         self.img_or_vid_scene.clear()
         self.image_or_video.setStyleSheet("background-color: #AFBE87")
         self.imgPath = ""
+        self.vidPath = ""
+        _translate = QtCore.QCoreApplication.translate
+        self.label_2.setText(_translate("MainWindow", "File"))
         self.disableOpenMenu()
 
     def generatePreds(self):
