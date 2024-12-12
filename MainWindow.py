@@ -11,7 +11,7 @@ from Dialog import Ui_Dialog
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QGraphicsScene, QDialog, QGraphicsPixmapItem, QMessageBox
-from PyQt6.QtGui import QPixmap, QImage
+from PyQt6.QtGui import QPixmap, QImage, QMovie
 from PyQt6.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject, pyqtSlot
 
 import cv2
@@ -267,7 +267,9 @@ class Ui_MainWindow(object):
         # Variables
         self.imgPath = ""
         self.vidPath = ""
-        self.video_cap, self.video_timer = None, None
+        self.video_cap, self.vidDisplay, self.movie = None, None, None
+        self.gif_frames = []
+        self.current_frame_idx = 0
         self.grade_s2 = [0]
         self.grade_s3 = [0]
         self.length_grades = [0]
@@ -304,6 +306,9 @@ class Ui_MainWindow(object):
     def openImage(self):
         if self.video_cap != None:
             self.video_cap.release()
+        if self.movie != None:
+            self.movie.stop()
+        self.movie = None
         self.listWidget.hide()
         self.open.setDisabled(True)
         self.predict.setDisabled(True)
@@ -406,6 +411,9 @@ class Ui_MainWindow(object):
     def openVideo(self):
         if self.video_cap != None:
             self.video_cap.release()
+        if self.movie != None:
+            self.movie.stop()
+        self.movie = None
         self.listWidget.hide()
         self.open.setDisabled(True)
         self.predict.setDisabled(True)
@@ -436,55 +444,91 @@ class Ui_MainWindow(object):
             self.update_status("Processing video...")
 
             self.video_cap = cv2.VideoCapture(self.vidPath)
+            video_fps = self.video_cap.get(cv2.CAP_PROP_FPS)
+            print("Video fps:", video_fps)
+            target_fps = 30  # Desired FPS for the GIF
+            video_frame_interval = int(1000 / target_fps)  # Interval in milliseconds for 30 FPS
 
-            video_fps = self.video_cap.get(cv2.CAP_PROP_FPS)  # Get FPS from the video file
-            video_frame_interval = int(1000 / (video_fps if video_fps > 0 else 30))  # Default to 30 FPS if FPS is 0
+            frames = []
+            frame_count = 0
+            while True:
+                ret, frame = self.video_cap.read()
+                if not ret:
+                    break
+
+                # Downsample or skip frames to match 30 FPS
+                if video_fps > target_fps:
+                    if frame_count % int(video_fps / target_fps) == 0:
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        frames.append(frame)
+                else:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    frames.append(frame)
+
+                frame_count += 1
+                if frame_count == 1:
+                    self.update_status("Processing video: " + str(frame_count) + " frame processed")
+                else:
+                    self.update_status("Processing video: " + str(frame_count) + " frames processed")
+
+            print(frame_count)
+
+            # Convert frames to GIF using Pillow
+            self.createGIF(frames)
 
             return video_frame_interval
 
         except Exception as e:
             raise e  # Worker will emit error signal
         
-    def displayVideo(self, video_frame_interval):
+    def createGIF(self, frames):
         try:
-            self.img_or_vid_scene.clear()
-            self.video_pixmap_item = QGraphicsPixmapItem()
-            self.img_or_vid_scene.addItem(self.video_pixmap_item)
-            self.image_or_video.setScene(self.img_or_vid_scene)
+            pil_frames = []
+            total_frames = len(frames)
+            for i in range(total_frames):
+                pil_image = Image.fromarray(frames[i])
+                self.update_status(f"Processing frame {i + 1} of {total_frames} for display...")
+                # Resize the image to 410x350
+                pil_image = pil_image.resize((408, 348), Image.Resampling.LANCZOS)
+                pil_frames.append(pil_image)
 
-            self.video_timer = QTimer()
-            self.video_timer.timeout.connect(self.update_frame)
-            self.video_timer.start(video_frame_interval)
+            self.update_status("Combining frames for display...")   
+            gif_path = "__pycache__/output.gif"
+            pil_frames[0].save(gif_path, save_all=True, append_images=pil_frames[1:], duration=100, loop=0)
+            self.gif_frames = pil_frames
+        except Exception as e:
+            raise e
+        
+    def displayVideo(self):
+        try:
+            self.update_status("Displaying video...")   
+            self.img_or_vid_scene.clear()
+            
+            self.movie = QMovie("__pycache__/output.gif")
+        
+            # Create a QGraphicsPixmapItem to display the GIF version of the video
+            self.gif_pixmap_item = QGraphicsPixmapItem()
+            self.img_or_vid_scene.addItem(self.gif_pixmap_item)
+            self.image_or_video.setScene(self.img_or_vid_scene)
+            self.movie.frameChanged.connect(self.updateFrame)
+            
+            # Start playing the GIF (this will loop automatically)
+            self.movie.start()
 
             self.statusbar.clearMessage()
 
         except Exception as e:
             raise e  # Worker will emit error signal
         
-    def update_frame(self):
-        # Read frame
-        ret, frame = self.video_cap.read()
-        if not ret:
-            self.video_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)          # Reset video timer
-            self.statusbar.clearMessage()
-            return
-        
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    def updateFrame(self):
+        # This function is called whenever the QMovie updates the frame.
+        current_frame = self.movie.currentPixmap()  # Get the current frame as QPixmap
+        self.gif_pixmap_item.setPixmap(current_frame)  # Update the pixmap in the scene
 
-        # Resize the frame to fit the QGraphicsView
-        view_width = self.image_or_video.width() - 2
-        view_height = self.image_or_video.height() - 2
-        frame_height, frame_width, _ = frame.shape
-        scaling_factor = min(view_width / frame_width, view_height / frame_height)
-        new_width = int(frame_width * scaling_factor)
-        new_height = int(frame_height * scaling_factor)
-        frame = cv2.resize(frame, (new_width, new_height))
-
-        height, width, channel = frame.shape
-        bytes_per_line = channel * width
-        q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-
-        self.video_pixmap_item.setPixmap(QPixmap.fromImage(q_image))
+    def pilToQImage(self, pil_image):
+        """Convert a PIL image to QImage."""
+        img_data = pil_image.tobytes("raw", "RGB")
+        return QImage(img_data, pil_image.width, pil_image.height, QImage.Format.Format_RGB888)
 
     def loadVideoFail(self):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
