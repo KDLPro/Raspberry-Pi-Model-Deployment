@@ -885,9 +885,6 @@ class Ui_MainWindow(object):
         self.graph.fitInView(pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.graph.setScene(self.graph_scene)
 
-        print(self.grade_s2)
-        print(self.grade_s3)
-
     def predictionFail(self):
         # Clears the graphics view and status bar when image loading has failed, and resets variables
         self.statusbar.clearMessage()
