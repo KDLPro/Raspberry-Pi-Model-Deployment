@@ -799,7 +799,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "FiberWatch"))
         self.title_label.setText(_translate("MainWindow", "FiberWatch"))
-        self.label_2.setText(_translate("MainWindow", "Image"))
+        self.label_2.setText(_translate("MainWindow", "File"))
         self.label_3.setText(_translate("MainWindow", "Detections"))
         self.open.setToolTip(_translate("MainWindow", "Loads an image for processing by the abaca fiber classification model."))
         self.open.setText(_translate("MainWindow", "Open"))
