@@ -633,10 +633,10 @@ class Ui_MainWindow(object):
             final_vid_mp4 = os.path.normpath(final_vid_mp4) 
 
             try:
-                self.update_status("Converting resulting video to mp4")
+                self.update_status("Converting resulting video to mp4...")
                 # Use FFmpeg to convert the AVI to MP4
                 ffmpeg.input(final_vid_avi).output(final_vid_mp4, vcodec='libx264', acodec='aac').run()
-                self.update_status(f"Converting result video successful: {final_vid_avi} to {final_vid_mp4}")
+                self.update_status("Converting result video successful!")
             except ffmpeg.Error as e:
                 print(f"Error converting video: {e}")
 
