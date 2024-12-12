@@ -12,7 +12,7 @@ from Dialog import Ui_Dialog
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QGraphicsScene, QDialog, QGraphicsPixmapItem, QMessageBox
 from PyQt6.QtGui import QPixmap, QImage
-from PyQt6.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject, pyqtSlot, QTimer
+from PyQt6.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject, pyqtSlot
 
 import cv2
 
