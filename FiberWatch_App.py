@@ -11,7 +11,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
 app = QtWidgets.QApplication(sys.argv)
-app.setStyleSheet("QToolTip { background-color: white; }")
 
 window = MainWindow()
 window.show()
