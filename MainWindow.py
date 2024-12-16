@@ -490,6 +490,9 @@ class Ui_MainWindow(object):
         try:
             pil_frames = []
             total_frames = len(frames)
+            if total_frames > 350:
+                AlertVideoTooManyFrames()
+                raise Exception("Video file too long!")
             for i in range(total_frames):
                 pil_image = Image.fromarray(frames[i])
                 self.update_status(f"Processing frame {i + 1} of {total_frames} for display...")
@@ -1044,6 +1047,14 @@ def AlertVideo():
     ui.setDialogDetails(dialog, title="Video loading failed!", text="Video must be loaded first!", textColor="#B41C2B")
     dialog.exec()
 
+def AlertVideoTooManyFrames():
+    # Alert user via dialog that a video needs to be loaded
+    dialog = QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(dialog)
+    ui.setDialogDetails(dialog, title="Video file too big!", text="Video file is too long! \nPlease select a shorter video. \nPreferably with less video frames.", textColor="#B41C2B")
+    dialog.exec()
+
 def AlertPrediction(offline):
     # Alert user via dialog that the predictions can't be uploaded
     dialog = QDialog()
@@ -1057,7 +1068,7 @@ def AlertPrediction(offline):
     else:
         ui.setDialogDetails(dialog, 
                             title="Generating predictions failed!", 
-                            text="Generating predictions failed! \nIf you used a video, please try a smaller file.", 
+                            text="Generating predictions failed! \nIf you used a video, please try a smaller video file.", 
                             textColor="#B41C2B")
     dialog.exec()
 
