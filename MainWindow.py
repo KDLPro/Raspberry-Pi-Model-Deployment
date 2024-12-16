@@ -832,19 +832,6 @@ class Ui_MainWindow(object):
                         if grades[i] == 0:
                             continue
                         grade_code = "S2" if (i == 1) else "S3"
-                    
-                        # Uploading results to Supabase
-
-                        try:
-                            self.update_status("Uploading results to Supabase database...")
-                            response = (
-                                self.supabase.table("fiber_scanning_logs")
-                                .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
-                                .execute()
-                            )
-                        except:
-                            self.online = True
-                            break
 
                     self.length_grades.append(len(self.length_grades))
                 except Exception as e:
@@ -854,12 +841,16 @@ class Ui_MainWindow(object):
             # Uploading results to Supabase
             self.update_status("Uploading results to Supabase database...")
             for i in range(2):
-                grade_code = "S2" if (i == 1) else "S3"
-                response = (
-                    self.supabase.table("fiber_scanning_logs")
-                    .insert({"fiber_grade": grade_code, "number_of_fibers": final_grades[i]})
-                    .execute()
-                )
+                try:
+                    grade_code = "S2" if (i == 1) else "S3"
+                    response = (
+                        self.supabase.table("fiber_scanning_logs")
+                        .insert({"fiber_grade": grade_code, "number_of_fibers": final_grades[i]})
+                        .execute()
+                    )                
+                except:
+                    self.online = False
+                    break
 
         # Display graph
         self.update_status("Displaying graph...")
