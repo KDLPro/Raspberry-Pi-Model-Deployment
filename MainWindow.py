@@ -824,22 +824,27 @@ class Ui_MainWindow(object):
                     final_grades[0] += grades[0]
                     final_grades[1] += grades[1]
 
-                    if self.offline == False:
+                    for i in range(2):
+                        if i == 0:
+                            self.grade_s2.append(grades[0])
+                        else:
+                            self.grade_s3.append(grades[1])
+                        if grades[i] == 0:
+                            continue
+                        grade_code = "S2" if (i == 1) else "S3"
+                    
                         # Uploading results to Supabase
-                        self.update_status("Uploading results to Supabase database...")
-                        for i in range(2):
-                            if i == 0:
-                                self.grade_s2.append(grades[0])
-                            else:
-                                self.grade_s3.append(grades[1])
-                            if grades[i] == 0:
-                                continue
-                            grade_code = "S2" if (i == 1) else "S3"
+
+                        try:
+                            self.update_status("Uploading results to Supabase database...")
                             response = (
                                 self.supabase.table("fiber_scanning_logs")
                                 .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
                                 .execute()
                             )
+                        except:
+                            self.online = True
+                            break
 
                     self.length_grades.append(len(self.length_grades))
                 except Exception as e:
