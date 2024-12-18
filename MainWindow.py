@@ -425,7 +425,7 @@ class Ui_MainWindow(object):
         self.open.setStyleSheet("QWidget{background-color: rgb(0, 236, 96); border: none;} QToolTip {background-color: white;}")
 
         # Load image
-        self.vidPath, _ = QFileDialog.getOpenFileName(self, caption="Open Video", filter="Video Files (*.mp4 *.flv *.ts *.mts *.avi)")
+        self.vidPath, _ = QFileDialog.getOpenFileName(self, caption="Open Video", filter="Video Files (*.mp4 *.flv *.ts *.mts *.avi *.webm)")
         self.imgPath = ""
 
         _translate = QtCore.QCoreApplication.translate
