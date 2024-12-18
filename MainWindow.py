@@ -468,6 +468,9 @@ class Ui_MainWindow(object):
                     if frame_count % int(video_fps / target_fps) == 0:
                         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         frames.append(frame)
+                    else:
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        frames.append(frame)
                 else:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     frames.append(frame)
