@@ -736,8 +736,8 @@ class Ui_MainWindow(object):
                     grade_code = "S2" if (i == 1) else "S3"
                     try: 
                         response = (
-                            self.supabase.table("fiber_scanning_logs")
-                            .insert({"fiber_grade": grade_code, "number_of_fibers": grades[i]})
+                            self.supabase.table("fiber_logs")
+                            .insert({"no_fibers": grades[i], "fiber_grade": grade_code, "alert_code": None})
                             .execute()
                         )
                     except:
@@ -850,10 +850,10 @@ class Ui_MainWindow(object):
                 try:
                     grade_code = "S2" if (i == 1) else "S3"
                     response = (
-                        self.supabase.table("fiber_scanning_logs")
-                        .insert({"fiber_grade": grade_code, "number_of_fibers": final_grades[i]})
-                        .execute()
-                    )                
+                            self.supabase.table("fiber_logs")
+                            .insert({"no_fibers": grades[i], "fiber_grade": grade_code, "alert_code": None})
+                            .execute()
+                    )        
                 except:
                     self.online = False
                     break
